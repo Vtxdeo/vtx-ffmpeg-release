@@ -15,15 +15,21 @@
 * **多架构支持**：当前支持 `x86_64`，未来计划支持 `aarch64` 和 `armv7`。
 * **自动化工作流**：通过 GitHub Actions 完成透明的构建过程。
 
-## 构建配置
+## 构建配置 (Profiles)
 
-根据设备的不同能力，我们提供不同的 FFmpeg 配置文件。
+我们现在提供 **14 种专业预设**，分为 5 大类，超越了单纯的体积限制，转为针对垂直应用场景进行优化。
 
-| 配置文件      | 目标体积         | 适用场景              | 主要特点                                                                |
-| --------- | ------------ | ----------------- | ------------------------------------------------------------------- |
-| **Nano**  | **约 1 MB**   | 路由器 / 物联网设备       | 仅支持 `ffprobe`，用于元数据提取、格式检测。无法进行转码。                                  |
-| **Micro** | **约 5 MB**   | Raspberry Pi Zero | 支持 `ffprobe` + 基本的 `ffmpeg`，用于缩略图生成（MJPEG/PNG）、缩放及基础 H.264/HEVC 解码。 |
-| **Full**  | **50 MB 以上** | 服务器 / PC          | *(敬请期待)* 完整的功能集，支持所有编码器和过滤器。                                        |
+**快速概览：**
+
+* **基础通用 (General)**: `nano`, `micro`, `mini`, `full` (体积优先)
+* **输入接入 (Ingest)**: `stream`, `indexer`, `audio` (专注协议与读取)
+* **核心处理 (Processing)**: `remux`, `transcode`, `animator` (流水线优化)
+* **交付归档 (Delivery)**: `vod`, `archive` (分发与冷存)
+* **特殊用途 (Specialized)**: `debug`, `legacy` (运维与兼容)
+
+> 📘 **详细文档**
+>
+> 请查阅 **[预设场景清单](docs/PROFILES.md)** 以获取所有预设的能力矩阵、编码支持及适用场景的详细说明。
 
 ## 使用指南
 
@@ -35,12 +41,13 @@
 
 ```bash
 # 示例：在路由器上部署 Nano 配置文件
-wget [https://github.com/YourUsername/vtx-ffmpeg-release/releases/latest/download/vtx-ffprobe-x86_64-nano](https://github.com/YourUsername/vtx-ffmpeg-release/releases/latest/download/vtx-ffprobe-x86_64-nano)
+wget [https://github.com/Vtxdeo/vtx-ffmpeg-release/releases/latest/download/vtx-ffprobe-x86_64-nano](https://github.com/YourUsername/vtx-ffmpeg-release/releases/latest/download/vtx-ffprobe-x86_64-nano)
 chmod +x vtx-ffprobe-x86_64-nano
 mv vtx-ffprobe-x86_64-nano /usr/local/bin/ffprobe
+
 ```
 
-### 集成方式（vtx-core）
+### 集成方式 (vtx-core)
 
 如果将二进制文件放置在配置的媒体路径下，`vtx-core` 将自动检测并使用这些二进制文件，无需额外安装。
 
@@ -50,7 +57,7 @@ mv vtx-ffprobe-x86_64-nano /usr/local/bin/ffprobe
 
 ```bash
 # 1. 克隆仓库
-git clone [https://github.com/YourUsername/vtx-ffmpeg-release.git](https://github.com/YourUsername/vtx-ffmpeg-release.git)
+git clone [https://github.com/Vtxdeo/vtx-ffmpeg-release.git](https://github.com/Vtxdeo/vtx-ffmpeg-release.git)
 cd vtx-ffmpeg-release
 
 # 2. 运行构建脚本（需要 Alpine 环境或 Docker）
@@ -59,6 +66,7 @@ docker run -it -v $(pwd):/workspace -w /workspace alpine:latest sh
 # 在 Docker 内：
 apk add build-base perl pkgconf yasm nasm git linux-headers bash coreutils file
 ./scripts/build.sh nano x86_64
+
 ```
 
 ## 许可证与法律
@@ -68,7 +76,7 @@ apk add build-base perl pkgconf yasm nasm git linux-headers bash coreutils file
 **二进制文件**：发布的二进制文件包含来自 FFmpeg 项目及其他第三方库的开源软件。
 
 * 二进制文件已静态链接。
-* 根据不同配置文件（例如启用了 `libx264`），这些二进制文件可能会受到 **GPL v3 许可证** 的约束。
+* 根据不同配置文件（例如使用了 `transcode` 或 `full`），这些二进制文件可能会受到 **GPL v3 许可证** 等开源协议的约束。
 * 请查阅具体二进制文件的 `LICENSE` 输出（使用 `ffmpeg -L` 命令）以了解详细的许可证条款。
 
 **免责声明**：本项目与 FFmpeg 项目无关，FFmpeg 是 Fabrice Bellard 的商标。

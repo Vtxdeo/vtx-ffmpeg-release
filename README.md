@@ -17,13 +17,19 @@ This repository provides automated, reproducible, and highly customized **static
 
 ## Profiles
 
-We provide different "flavors" of FFmpeg depending on your device's capabilities.
+We now offer **14 specialized profiles** organized into 5 categories, moving beyond simple size constraints to target specific application scenarios.
 
-| Profile | Target Size | Use Case | Key Features |
-| :--- | :--- | :--- | :--- |
-| **Nano** | **~1 MB** | Router / IoT | `ffprobe` only. Metadata extraction, format detection. No transcoding. |
-| **Micro** | **~5 MB** | Raspberry Pi Zero | `ffprobe` + Basic `ffmpeg`. Thumbnail generation (MJPEG/PNG), scaling, basic H.264/HEVC decoding. |
-| **Full** | *>50 MB* | Server / PC | *(Coming Soon)* Full feature set with all codecs and filters. |
+**Quick Summary:**
+
+* **General Purpose**: `nano`, `micro`, `mini`, `full` (Balanced for general use)
+* **Ingest & IO**: `stream`, `indexer`, `audio` (Protocol & demuxer focused)
+* **Processing**: `remux`, `transcode`, `animator` (Pipeline optimization)
+* **Delivery**: `vod`, `archive` (Distribution & Storage)
+* **Specialized**: `debug`, `legacy` (Maintenance & Compatibility)
+
+> 📘 **Detailed Documentation**
+>
+> Please refer to the **[Profile Manifesto](docs/PROFILES.md)** for a comprehensive matrix of capabilities, codecs, and target use cases.
 
 ## Usage
 
@@ -33,7 +39,7 @@ Go to the [Releases Page](../../releases) and download the binary matching your 
 ### Integration (Manual)
 ```bash
 # Example: Deploying Nano profile on a router
-wget [https://github.com/YourUsername/vtx-ffmpeg-release/releases/latest/download/vtx-ffprobe-x86_64-nano](https://github.com/YourUsername/vtx-ffmpeg-release/releases/latest/download/vtx-ffprobe-x86_64-nano)
+wget [https://github.com/Vtxdeo/vtx-ffmpeg-release/releases/latest/download/vtx-ffprobe-x86_64-nano](https://github.com/Vtxdeo/vtx-ffmpeg-release/releases/latest/download/vtx-ffprobe-x86_64-nano)
 chmod +x vtx-ffprobe-x86_64-nano
 mv vtx-ffprobe-x86_64-nano /usr/local/bin/ffprobe
 
@@ -49,7 +55,7 @@ If you want to build these binaries yourself using Docker:
 
 ```bash
 # 1. Clone the repo
-git clone [https://github.com/YourUsername/vtx-ffmpeg-release.git](https://github.com/YourUsername/vtx-ffmpeg-release.git)
+git clone [https://github.com/Vtxdeo/vtx-ffmpeg-release.git](https://github.com/Vtxdeo/vtx-ffmpeg-release.git)
 cd vtx-ffmpeg-release
 
 # 2. Run build script (requires Alpine environment or Docker)
@@ -68,7 +74,7 @@ apk add build-base perl pkgconf yasm nasm git linux-headers bash coreutils file
 **Binaries**: The released binaries contain software from the FFmpeg project and other third-party libraries.
 
 * Binaries are statically linked.
-* Depending on the profile (e.g., if `libx264` is enabled), the binaries may be subject to the **GPL v3 License**.
+* Depending on the profile (e.g., if `transcode` or `full` is used), the binaries may be subject to various open source licenses including **GPL v3**.
 * Please consult the `LICENSE` output of the specific binary (`ffmpeg -L`) for exact licensing terms.
 
 **Disclaimer**: This project is not affiliated with the FFmpeg project. FFmpeg is a trademark of Fabrice Bellard.
