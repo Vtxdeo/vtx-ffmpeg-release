@@ -70,11 +70,7 @@ case "${TARGET_OS}-${ARCH}" in
         ;;
     linux-mipsel)
         COMMON_FLAGS+=("--arch=mipsel" "--target-os=linux" "--enable-cross-compile" "--cross-prefix=mipsel-linux-musl-")
-
-        # === Core Fix: Re-enable MIPS32r2 support ===
-        # Fix 'opcode not supported: mips1' error
         COMMON_FLAGS+=("--cpu=mips32r2" "--extra-cflags=-march=mips32r2")
-
         COMMON_FLAGS+=("--disable-mipsdsp" "--disable-mipsdspr2")
         ;;
     linux-riscv64)
