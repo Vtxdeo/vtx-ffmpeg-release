@@ -191,7 +191,8 @@ jobs:
         if: matrix.toolchain_url != ''
         run: |
           echo "Downloading toolchain from ${{ matrix.toolchain_url }}..."
-          wget -q -O toolchain.tgz ${{ matrix.toolchain_url }}
+          wget --tries=5 --waitretry=5 --retry-connrefused -q -O toolchain.tgz ${{ matrix.toolchain_url }}
+          
           tar -xf toolchain.tgz
           DIR_NAME=$(tar -tf toolchain.tgz | head -1 | cut -f1 -d"/")
           echo "$(pwd)/$DIR_NAME/bin" >> $GITHUB_PATH
