@@ -1,4 +1,4 @@
-name: Build VTX Tailored FFmpeg
+name: Build Universal VTX FFmpeg
 
 on:
   push:
@@ -9,33 +9,69 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build ${{ matrix.profile }} for ${{ matrix.arch }}
+  build_turbo:
+    name: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.profile }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64]
-        profile: [nano, micro]
+        include:
+          # === Linux x86_64 (Native) ===
+          - os: linux
+            arch: x86_64
+            profile: nano
+          - os: linux
+            arch: x86_64
+            profile: micro
+          - os: linux
+            arch: x86_64
+            profile: mini
+          - os: linux
+            arch: x86_64
+            profile: full
 
-    container:
-      image: alpine:latest
+          # === Windows x86_64 (MinGW) ===
+          - os: win
+            arch: x86_64
+            profile: micro
+          - os: win
+            arch: x86_64
+            profile: full
+
+          # === ARM64 (树莓派4/5, 服务器) ===
+          - os: linux
+            arch: arm64
+            profile: micro
+            toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
+            toolchain_bin: "aarch64-linux-musl-cross/bin"
+          - os: linux
+            arch: arm64
+            profile: mini
+            toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
+            toolchain_bin: "aarch64-linux-musl-cross/bin"
+
+          # === ARMv7 (树莓派3, 老机顶盒) ===
+          - os: linux
+            arch: armv7
+            profile: nano
+            toolchain_url: "https://musl.cc/arm-linux-musleabi-cross.tgz"
+            toolchain_bin: "arm-linux-musleabi-cross/bin"
+
+          # === MIPS (路由器: MT7620/7621, K2P) ===
+          - os: linux
+            arch: mipsel
+            profile: nano
+            toolchain_url: "https://musl.cc/mipsel-linux-musl-cross.tgz"
+            toolchain_bin: "mipsel-linux-musl-cross/bin"
+
+          # === RISC-V (开发板) ===
+          - os: linux
+            arch: riscv64
+            profile: micro
+            toolchain_url: "https://musl.cc/riscv64-linux-musl-cross.tgz"
+            toolchain_bin: "riscv64-linux-musl-cross/bin"
 
     steps:
-      - name: Install Build Dependencies
-        run: |
-          apk add --no-cache \
-            build-base \
-            perl \
-            pkgconf \
-            yasm \
-            nasm \
-            git \
-            linux-headers \
-            bash \
-            coreutils \
-            file
-
       - name: Checkout FFmpeg Source
         uses: actions/checkout@v4
         with:
@@ -47,29 +83,36 @@ jobs:
         with:
           path: vtx-config
 
-      - name: Grant Permission
-        run: chmod +x vtx-config/scripts/build.sh
-
-      - name: Run VTX Build Script
-        run: ./vtx-config/scripts/build.sh ${{ matrix.profile }} ${{ matrix.arch }}
-
-      - name: Verify & Report Size
+      - name: Install Dependencies
         run: |
-          echo "=== Artifact Verification ==="
-          file ffmpeg || true
-          file ffprobe || true
-          
-          echo "=== Size Report ==="
-          du -h ffmpeg || true
-          du -h ffprobe || true
+          sudo apt-get update
+          sudo apt-get install -y build-essential yasm nasm pkg-config ccache mingw-w64 wget tar
 
-      - name: Prepare Artifacts
+      - name: Setup CCache
+        uses: actions/cache@v3
+        with:
+          path: ~/.ccache
+          key: ccache-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.profile }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.profile }}-
+
+      - name: Setup Cross Toolchain
+        if: matrix.toolchain_url != ''
         run: |
-          mkdir -p dist
-          [ -f ffmpeg ] && cp ffmpeg dist/vtx-ffmpeg-${{ matrix.arch }}-${{ matrix.profile }}
-          [ -f ffprobe ] && cp ffprobe dist/vtx-ffprobe-${{ matrix.arch }}-${{ matrix.profile }}
+          echo "Downloading toolchain from ${{ matrix.toolchain_url }}..."
+          wget -q -O toolchain.tgz ${{ matrix.toolchain_url }}
+          tar -xf toolchain.tgz
+          DIR_NAME=$(tar -tf toolchain.tgz | head -1 | cut -f1 -d"/")
+          echo "$(pwd)/$DIR_NAME/bin" >> $GITHUB_PATH
 
-      - name: Upload Release Assets
+      - name: Run Build Script
+        run: |
+          chmod +x vtx-config/scripts/build.sh
+          export PATH="/usr/lib/ccache:$PATH"
+
+          ./vtx-config/scripts/build.sh ${{ matrix.profile }} ${{ matrix.os }} ${{ matrix.arch }} ${{ github.ref_name }}
+
+      - name: Upload Artifacts
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:

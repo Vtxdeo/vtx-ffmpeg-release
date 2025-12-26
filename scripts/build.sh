@@ -1,23 +1,19 @@
 #!/bin/bash
 set -e
 
-# 参数获取
-PROFILE=$1
-ARCH=$2
-CONFIG_DIR="vtx-config/profiles"
+PROFILE=$1    # nano / micro / mini / full
+TARGET_OS=$2  # 目标操作系统: linux / win
+ARCH=$3       # x86_64 / arm64 / armv7 / mipsel / riscv64
+VERSION=$4    # 版本号
 
-# 检查配置文件是否存在
-if [ ! -f "${CONFIG_DIR}/${PROFILE}.conf" ]; then
-    echo "Error: 配置文件未找到：${CONFIG_DIR}/${PROFILE}.conf"
-    exit 1
-fi
+CONFIG_DIR="vtx-config/profiles"
+EXT=""
 
 echo ">>> 开始构建过程"
 echo ">>> 配置文件: ${PROFILE}"
-echo ">>> 架构: ${ARCH}"
+echo ">>> 目标操作系统: ${TARGET_OS} / 架构: ${ARCH}"
+echo ">>> 版本号: ${VERSION}"
 
-# 定义通用优化参数
-# 目标：静态链接，去除调试信息，尽可能缩小体积
 COMMON_FLAGS=(
     "--prefix=/dist"
     "--enable-static"
@@ -30,27 +26,69 @@ COMMON_FLAGS=(
     "--disable-podpages"
     "--disable-txtpages"
     "--pkg-config-flags=--static"
-    "--extra-cflags=-Os"   # 优化编译器体积
-    "--extra-ldflags=-s"   # 优化链接器体积
+    "--extra-cflags=-Os"
+    "--extra-ldflags=-s"
 )
 
-# 2. 读取 Profile 特有参数
+if command -v ccache >/dev/null 2>&1; then
+    echo ">>> 启用 CCache"
+    COMMON_FLAGS+=("--cc=ccache gcc" "--cxx=ccache g++")
+fi
+
+# === 3. 交叉编译配置 ===
+case "${TARGET_OS}-${ARCH}" in
+    linux-x86_64)
+        # 本地编译，无需前缀
+        ;;
+    linux-arm64)
+        COMMON_FLAGS+=("--arch=aarch64" "--enable-cross-compile" "--cross-prefix=aarch64-linux-musl-")
+        ;;
+    linux-armv7)
+        COMMON_FLAGS+=("--arch=arm" "--enable-cross-compile" "--cross-prefix=arm-linux-musleabi-")
+        ;;
+    linux-mipsel)
+        COMMON_FLAGS+=("--arch=mipsel" "--enable-cross-compile" "--cross-prefix=mipsel-linux-musl-")
+        # MIPS 架构需禁用 DSP 指令以提高兼容性
+        COMMON_FLAGS+=("--disable-mipsdsp" "--disable-mipsdspr2")
+        ;;
+    linux-riscv64)
+        COMMON_FLAGS+=("--arch=riscv64" "--enable-cross-compile" "--cross-prefix=riscv64-linux-musl-")
+        ;;
+    win-x86_64)
+        COMMON_FLAGS+=("--arch=x86_64" "--target-os=mingw32" "--enable-cross-compile" "--cross-prefix=x86_64-w64-mingw32-")
+        EXT=".exe"
+        ;;
+    *)
+        echo "❌ 错误: 不支持的目标组合: ${TARGET_OS}-${ARCH}"
+        exit 1
+        ;;
+esac
+
+if [ ! -f "${CONFIG_DIR}/${PROFILE}.conf" ]; then
+    echo "❌ 错误: 配置文件未找到: ${CONFIG_DIR}/${PROFILE}.conf"
+    exit 1
+fi
 SPECIFIC_FLAGS=$(cat "${CONFIG_DIR}/${PROFILE}.conf" | tr '\n' ' ')
 
-echo ">>> 正在配置 FFmpeg..."
-# 打印配置命令，便于调试
-echo "./configure --arch=${ARCH} ${COMMON_FLAGS[*]} ${SPECIFIC_FLAGS}"
-
-# 3. 执行配置过程
-./configure --arch="${ARCH}" "${COMMON_FLAGS[@]}" $SPECIFIC_FLAGS
-
-echo ">>> 开始编译 (此过程可能需要一些时间)..."
-# 使用所有核心进行编译
+echo ">>> 配置 FFmpeg..."
+echo ">>> 配置命令: ./configure ${COMMON_FLAGS[@]} ${SPECIFIC_FLAGS}"
+./configure "${COMMON_FLAGS[@]}" $SPECIFIC_FLAGS
+echo ">>> 编译中..."
 make -j$(nproc)
+echo ">>> 打包产物..."
+mkdir -p dist
 
-echo ">>> 正在剥离二进制文件..."
-# 强制执行 strip 操作，进一步减少文件体积
-strip ffmpeg 2>/dev/null || true
-strip ffprobe 2>/dev/null || true
+OUT_FFMPEG="vtx-ffmpeg-${VERSION}-${TARGET_OS}-${ARCH}-${PROFILE}${EXT}"
+OUT_FFPROBE="vtx-ffprobe-${VERSION}-${TARGET_OS}-${ARCH}-${PROFILE}${EXT}"
 
-echo ">>> 构建完成！"
+if [ -f ffmpeg${EXT} ]; then
+    cp ffmpeg${EXT} "dist/${OUT_FFMPEG}"
+    echo ">>> 生成文件: ${OUT_FFMPEG}"
+fi
+
+if [ -f ffprobe${EXT} ]; then
+    cp ffprobe${EXT} "dist/${OUT_FFPROBE}"
+    echo ">>> 生成文件: ${OUT_FFPROBE}"
+fi
+
+echo ">>> ✅ 构建过程完成"
