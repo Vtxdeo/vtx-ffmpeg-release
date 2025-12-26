@@ -1,0 +1,73 @@
+name: Build VTX Tailored FFmpeg
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ${{ matrix.profile }} for ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64]
+        profile: [nano, micro]
+
+    container:
+      image: alpine:latest
+
+    steps:
+      - name: Install Build Dependencies
+        run: |
+          apk add --no-cache \
+            build-base \
+            perl \
+            pkgconf \
+            yasm \
+            nasm \
+            git \
+            linux-headers \
+            bash \
+            coreutils \
+            file
+
+      - name: Checkout FFmpeg Source
+        uses: actions/checkout@v4
+        with:
+          repository: FFmpeg/FFmpeg
+          ref: n6.1
+
+      - name: Checkout VTX Configs
+        uses: actions/checkout@v4
+        with:
+          path: vtx-config
+
+      - name: Grant Permission
+        run: chmod +x vtx-config/scripts/build.sh
+
+      - name: Run VTX Build Script
+        run: ./vtx-config/scripts/build.sh ${{ matrix.profile }} ${{ matrix.arch }}
+
+      - name: Verify & Report Size
+        run: |
+          echo "=== Artifact Verification ==="
+          file ffmpeg || true
+          file ffprobe || true
+          
+          echo "=== Size Report ==="
+          du -h ffmpeg || true
+          du -h ffprobe || true
+
+      - name: Prepare Artifacts
+        run: |
+          mkdir -p dist
+          [ -f ffmpeg ] && cp ffmpeg dist/vtx-ffmpeg-${{ matrix.arch }}-${{ matrix.profile }}
+          [ -f ffprobe ] && cp ffprobe dist/vtx-ffprobe-${{ matrix.arch }}-${{ matrix.profile }}
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/*
