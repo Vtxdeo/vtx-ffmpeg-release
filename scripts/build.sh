@@ -63,7 +63,16 @@ fi
 # === 3. 交叉编译配置 ===
 case "${TARGET_OS}-${ARCH}" in
     linux-x86_64)
-        # 本地编译，无需前缀
+        if command -v x86_64-linux-musl-gcc >/dev/null 2>&1; then
+            echo ">>> 🛠️ 检测到 x86_64-linux-musl-gcc，启用静态 Musl 构建"
+            COMMON_FLAGS+=("--arch=x86_64" "--enable-cross-compile" "--cross-prefix=x86_64-linux-musl-")
+
+            if command -v ccache >/dev/null 2>&1; then
+                COMMON_FLAGS+=("--cc=ccache x86_64-linux-musl-gcc" "--cxx=ccache x86_64-linux-musl-g++")
+            fi
+        else
+            echo ">>> ⚠️ 未检测到 Musl 编译器，使用宿主 GCC (产物将依赖 Glibc，可能导致兼容性问题)"
+        fi
         ;;
     linux-arm64)
         COMMON_FLAGS+=("--arch=aarch64" "--enable-cross-compile" "--cross-prefix=aarch64-linux-musl-")

@@ -16,52 +16,82 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # === Linux x86_64 (Native - 旗舰全覆盖) ===
+          # === Linux x86_64 (Musl Static - 修复版) ===
           # 基础类
           - os: linux
             arch: x86_64
             profile: nano
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: micro
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: mini
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: full
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
+
           # 垂直场景类
           - os: linux
             arch: x86_64
             profile: stream
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: indexer
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: audio
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: remux
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: transcode
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: animator
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: vod
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: archive
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
+
           # 特殊类
           - os: linux
             arch: x86_64
             profile: debug
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: legacy
+            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            toolchain_bin: "x86_64-linux-musl-cross/bin"
 
           # === Windows x86_64 (MinGW) ===
           - os: win
@@ -87,12 +117,12 @@ jobs:
             toolchain_bin: "aarch64-linux-musl-cross/bin"
           - os: linux
             arch: arm64
-            profile: stream   # 适用于 IoT 推流设备
+            profile: stream
             toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
             toolchain_bin: "aarch64-linux-musl-cross/bin"
           - os: linux
             arch: arm64
-            profile: transcode # 适用于高性能 ARM 服务器
+            profile: transcode
             toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
             toolchain_bin: "aarch64-linux-musl-cross/bin"
 
@@ -104,7 +134,7 @@ jobs:
             toolchain_bin: "arm-linux-musleabi-cross/bin"
           - os: linux
             arch: armv7
-            profile: legacy   # 兼容性优先
+            profile: legacy
             toolchain_url: "https://musl.cc/arm-linux-musleabi-cross.tgz"
             toolchain_bin: "arm-linux-musleabi-cross/bin"
           - os: linux
