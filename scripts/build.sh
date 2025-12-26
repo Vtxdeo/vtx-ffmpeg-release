@@ -35,9 +35,7 @@ COMMON_FLAGS=(
     "--extra-cflags=-Os"
 
     # 版本信息注入
-    # 1. 让 ffmpeg -version 命令显示 VTX 标识
     "--extra-version=${VTX_IDENTITY}"
-    # 2. 宏定义供代码内部使用
     "--extra-cflags=-DVTX_BUILD_SHA=\\\"${GIT_SHA}\\\""
     "--extra-cflags=-DVTX_BUILD_VERSION=\\\"${VERSION}\\\""
 )
@@ -70,7 +68,7 @@ case "${TARGET_OS}-${ARCH}" in
         ;;
     linux-mipsel)
         COMMON_FLAGS+=("--arch=mipsel" "--target-os=linux" "--enable-cross-compile" "--cross-prefix=mipsel-linux-musl-")
-        # 为 MIPS 架构添加兼容性优化
+        COMMON_FLAGS+=("--cpu=mips32r2" "--extra-cflags=-march=mips32r2")
         COMMON_FLAGS+=("--disable-mipsdsp" "--disable-mipsdspr2")
         ;;
     linux-riscv64)
