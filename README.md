@@ -1,8 +1,8 @@
 # VTX FFmpeg Release
 
-![Build Status](https://github.com/YourUsername/vtx-ffmpeg-release/actions/workflows/build.yml/badge.svg)
-![License](https://img.shields.io/github/license/YourUsername/vtx-ffmpeg-release)
-![Release](https://img.shields.io/github/v/release/YourUsername/vtx-ffmpeg-release)
+![Build Status](https://github.com/Vtxdeo/vtx-ffmpeg-release/actions/workflows/build.yml/badge.svg)
+![License](https://img.shields.io/github/license/Vtxdeo/vtx-ffmpeg-release)
+![Release](https://img.shields.io/github/v/release/Vtxdeo/vtx-ffmpeg-release)
 
 > **Tailored FFmpeg Static Binaries for "Device No Lower Limit" Philosophy.**
 
