@@ -1,8 +1,8 @@
 # VTX FFmpeg Release
 
-![构建状态](https://github.com/YourUsername/vtx-ffmpeg-release/actions/workflows/build.yml/badge.svg)
-![许可证](https://img.shields.io/github/license/YourUsername/vtx-ffmpeg-release)
-![发布版](https://img.shields.io/github/v/release/YourUsername/vtx-ffmpeg-release)
+![Build Status](https://github.com/Vtxdeo/vtx-ffmpeg-release/actions/workflows/build.yml/badge.svg)
+![License](https://img.shields.io/github/license/Vtxdeo/vtx-ffmpeg-release)
+![Release](https://img.shields.io/github/v/release/Vtxdeo/vtx-ffmpeg-release)
 
 **专为“无设备下限”理念量身定制的 FFmpeg 静态二进制构建。**
 
