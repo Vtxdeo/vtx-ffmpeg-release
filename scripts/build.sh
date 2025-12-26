@@ -20,6 +20,10 @@ else
     GIT_SHA="unknown"
 fi
 
+# 构造版本标识 (例如: vtx-v0.0.8-a5e16b0)
+VTX_IDENTITY="vtx-${VERSION}-${GIT_SHA}"
+echo ">>> 版本标识: ${VTX_IDENTITY}"
+
 # 基础编译选项
 COMMON_FLAGS=(
     "--prefix=/dist"
@@ -29,12 +33,16 @@ COMMON_FLAGS=(
     "--disable-doc"
     "--pkg-config-flags=--static"
     "--extra-cflags=-Os"
-    # 注入版本元数据
+
+    # 版本信息注入
+    # 1. 让 ffmpeg -version 命令显示 VTX 标识
+    "--extra-version=${VTX_IDENTITY}"
+    # 2. 宏定义供代码内部使用
     "--extra-cflags=-DVTX_BUILD_SHA=\\\"${GIT_SHA}\\\""
     "--extra-cflags=-DVTX_BUILD_VERSION=\\\"${VERSION}\\\""
 )
 
-# Debug 模式处理
+# Debug 模式特殊处理
 if [ "$PROFILE" == "debug" ]; then
     echo ">>> DEBUG 模式: 保留调试符号"
     COMMON_FLAGS+=("--enable-debug")
@@ -42,10 +50,10 @@ else
     COMMON_FLAGS+=("--disable-debug" "--extra-ldflags=-s")
 fi
 
-# === 交叉编译配置 ===
+# === 交叉编译与架构匹配 ===
 case "${TARGET_OS}-${ARCH}" in
     linux-x86_64)
-        # 尝试使用 Musl 编译器进行构建
+        # 优先检测 Musl 编译器
         if command -v x86_64-linux-musl-gcc >/dev/null 2>&1; then
             echo ">>> 使用 x86_64-linux-musl-gcc 进行静态构建"
             COMMON_FLAGS+=("--arch=x86_64" "--target-os=linux" "--enable-cross-compile" "--cross-prefix=x86_64-linux-musl-")

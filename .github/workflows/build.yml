@@ -2,21 +2,21 @@ name: Build Universal VTX FFmpeg
 
 on:
   push:
-    tags: ['v*']
-  workflow_dispatch:
+    tags: ['v*']  # 触发版本标签的推送
+  workflow_dispatch:  # 支持手动触发工作流
 
 permissions:
-  contents: write
+  contents: write  # 允许写入内容
 
 jobs:
   build_turbo:
-    name: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.profile }}
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.profile }}  # 显示操作系统、架构和配置
+    runs-on: ubuntu-latest  # 使用最新的 Ubuntu 环境
     strategy:
-      fail-fast: false
+      fail-fast: false  # 在失败时继续构建其他平台
       matrix:
         include:
-          # === Linux x86_64 (旗舰全覆盖) ===
+          # === Linux x86_64 架构 ===
           - os: linux
             arch: x86_64
             profile: nano
@@ -74,7 +74,7 @@ jobs:
             profile: legacy
             use_toolchain: true
 
-          # === Windows x86_64 ===
+          # === Windows x86_64 架构 ===
           - os: win
             arch: x86_64
             profile: micro
@@ -85,7 +85,7 @@ jobs:
             arch: x86_64
             profile: transcode
 
-          # === ARM64 ===
+          # === ARM64 架构 ===
           - os: linux
             arch: arm64
             profile: micro
@@ -103,7 +103,7 @@ jobs:
             profile: transcode
             use_toolchain: true
 
-          # === ARMv7 ===
+          # === ARMv7 架构 ===
           - os: linux
             arch: armv7
             profile: nano
@@ -117,7 +117,7 @@ jobs:
             profile: stream
             use_toolchain: true
 
-          # === MIPS ===
+          # === MIPS 架构 ===
           - os: linux
             arch: mipsel
             profile: nano
@@ -127,7 +127,7 @@ jobs:
             profile: legacy
             use_toolchain: true
 
-          # === RISC-V ===
+          # === RISC-V 架构 ===
           - os: linux
             arch: riscv64
             profile: micro
@@ -138,17 +138,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: FFmpeg/FFmpeg
-          ref: n6.1
+          ref: n6.1  # 使用 FFmpeg v6.1 版本
 
       - name: Checkout VTX Configs
         uses: actions/checkout@v4
         with:
-          path: vtx-config
+          path: vtx-config  # 检出 VTX 配置文件
 
       - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential yasm nasm pkg-config ccache mingw-w64 curl tar
+          # 安装构建依赖
 
       - name: Setup CCache
         uses: actions/cache@v3
@@ -172,12 +173,11 @@ jobs:
           ARCH_MAP="${{ matrix.arch }}"
           [[ "$ARCH_MAP" == "arm64" ]] && ARCH_MAP="aarch64"
           [[ "$ARCH_MAP" == "armv7" ]] && ARCH_MAP="arm-linux-musleabi"
-
+          
           REPO_URL="https://github.com/Vtxdeo/vtx-toolchains/releases/download/toolchain-latest/${ARCH_MAP}-linux-musl-cross.tgz"
           
           echo ">>> 正在从 VTX 镜像仓库下载工具链: $REPO_URL"
           mkdir -p toolchain_dir
-
           curl -L --retry 5 --retry-delay 10 -o toolchain.tgz "$REPO_URL"
           tar -xf toolchain.tgz -C toolchain_dir --strip-components=1
           rm toolchain.tgz
@@ -192,10 +192,24 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           ./vtx-config/scripts/build.sh ${{ matrix.profile }} ${{ matrix.os }} ${{ matrix.arch }} ${{ github.ref_name }}
 
+      - name: Generate Build Manifest
+        run: |
+          cd dist
+          MANIFEST_NAME="manifest-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.profile }}.txt"
+          cat <<EOF > $MANIFEST_NAME
+          Product: VTX FFmpeg Static
+          Version: ${{ github.ref_name }}
+          Commit: ${{ github.sha }}
+          Build-Date: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          Profile: ${{ matrix.profile }}
+          Architecture: ${{ matrix.arch }}
+          OS: ${{ matrix.os }}
+          EOF
+
       - name: Generate Checksums
         run: |
           cd dist
-          sha256sum * > checksums.txt
+          sha256sum * > checksums-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.profile }}.txt
 
       - name: Upload Artifacts
         uses: softprops/action-gh-release@v1
@@ -203,4 +217,3 @@ jobs:
         with:
           files: |
             dist/*
-            dist/checksums.txt
