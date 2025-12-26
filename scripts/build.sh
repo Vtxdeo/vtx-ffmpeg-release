@@ -2,18 +2,18 @@
 set -e
 
 # 参数定义
-PROFILE=$1
-TARGET_OS=$2
-ARCH=$3
-VERSION=$4
+PROFILE=$1    # 配置文件，可能的值: nano / micro / mini / full
+TARGET_OS=$2  # 目标操作系统: linux / win
+ARCH=$3       # 目标架构: x86_64 / arm64 / armv7 / mipsel / riscv64
+VERSION=$4    # 版本号: v0.0.x
 
 CONFIG_DIR="vtx-config/profiles"
 EXT=""
 
-echo ">>> VTX FFmpeg 静态构建系统"
-echo ">>> 配置: ${PROFILE} | 系统: ${TARGET_OS} | 架构: ${ARCH}"
+echo ">>> 开始构建 VTX FFmpeg 静态构建系统"
+echo ">>> 配置: ${PROFILE} | 目标操作系统: ${TARGET_OS} | 架构: ${ARCH}"
 
-# 获取 Git 信息
+# 获取 Git 提交信息
 if command -v git >/dev/null 2>&1; then
     GIT_SHA=$(git rev-parse --short HEAD || echo "unknown")
 else
@@ -29,50 +29,68 @@ COMMON_FLAGS=(
     "--disable-doc"
     "--pkg-config-flags=--static"
     "--extra-cflags=-Os"
+    # 注入版本元数据
     "--extra-cflags=-DVTX_BUILD_SHA=\\\"${GIT_SHA}\\\""
     "--extra-cflags=-DVTX_BUILD_VERSION=\\\"${VERSION}\\\""
 )
 
-# 开启 CCache
-if command -v ccache >/dev/null 2>&1; then
-    COMMON_FLAGS+=("--cc=ccache gcc" "--cxx=ccache g++")
-fi
-
-# Debug 模式特殊处理
+# Debug 模式处理
 if [ "$PROFILE" == "debug" ]; then
+    echo ">>> DEBUG 模式: 保留调试符号"
     COMMON_FLAGS+=("--enable-debug")
 else
     COMMON_FLAGS+=("--disable-debug" "--extra-ldflags=-s")
 fi
 
-# 交叉编译匹配逻辑
+# === 交叉编译配置 ===
 case "${TARGET_OS}-${ARCH}" in
     linux-x86_64)
+        # 尝试使用 Musl 编译器进行构建
         if command -v x86_64-linux-musl-gcc >/dev/null 2>&1; then
-            COMMON_FLAGS+=("--arch=x86_64" "--enable-cross-compile" "--cross-prefix=x86_64-linux-musl-")
+            echo ">>> 使用 x86_64-linux-musl-gcc 进行静态构建"
+            COMMON_FLAGS+=("--arch=x86_64" "--target-os=linux" "--enable-cross-compile" "--cross-prefix=x86_64-linux-musl-")
+        else
+            echo ">>> 未检测到 Musl 编译器，使用宿主 GCC (Glibc)"
+            COMMON_FLAGS+=("--arch=x86_64" "--target-os=linux")
         fi
         ;;
     linux-arm64)
-        COMMON_FLAGS+=("--arch=aarch64" "--enable-cross-compile" "--cross-prefix=aarch64-linux-musl-")
+        COMMON_FLAGS+=("--arch=aarch64" "--target-os=linux" "--enable-cross-compile" "--cross-prefix=aarch64-linux-musl-")
         ;;
     linux-armv7)
-        COMMON_FLAGS+=("--arch=arm" "--enable-cross-compile" "--cross-prefix=arm-linux-musleabi-")
+        COMMON_FLAGS+=("--arch=arm" "--target-os=linux" "--enable-cross-compile" "--cross-prefix=arm-linux-musleabi-")
         ;;
     linux-mipsel)
-        COMMON_FLAGS+=("--arch=mipsel" "--enable-cross-compile" "--cross-prefix=mipsel-linux-musl-")
+        COMMON_FLAGS+=("--arch=mipsel" "--target-os=linux" "--enable-cross-compile" "--cross-prefix=mipsel-linux-musl-")
+        # 为 MIPS 架构添加兼容性优化
         COMMON_FLAGS+=("--disable-mipsdsp" "--disable-mipsdspr2")
         ;;
     linux-riscv64)
-        COMMON_FLAGS+=("--arch=riscv64" "--enable-cross-compile" "--cross-prefix=riscv64-linux-musl-")
+        COMMON_FLAGS+=("--arch=riscv64" "--target-os=linux" "--enable-cross-compile" "--cross-prefix=riscv64-linux-musl-")
         ;;
     win-x86_64)
         COMMON_FLAGS+=("--arch=x86_64" "--target-os=mingw32" "--enable-cross-compile" "--cross-prefix=x86_64-w64-mingw32-")
         EXT=".exe"
         ;;
+    *)
+        echo "❌ 错误: 不支持的目标组合: ${TARGET_OS}-${ARCH}"
+        exit 1
+        ;;
 esac
 
-# 加载配置
+# 配置文件检查
+if [ ! -f "${CONFIG_DIR}/${PROFILE}.conf" ]; then
+    echo "❌ 错误: 配置文件未找到: ${CONFIG_DIR}/${PROFILE}.conf"
+    exit 1
+fi
+
+# 加载特定配置
 SPECIFIC_FLAGS=$(cat "${CONFIG_DIR}/${PROFILE}.conf" | tr '\n' ' ')
+
+# 配置 FFmpeg
+echo ">>> 配置 FFmpeg..."
+# 打印配置命令用于调试
+echo ">>> ./configure ${COMMON_FLAGS[@]} ${SPECIFIC_FLAGS}"
 
 # 执行配置与编译
 ./configure "${COMMON_FLAGS[@]}" $SPECIFIC_FLAGS
@@ -80,7 +98,19 @@ make -j$(nproc)
 
 # 归档产物
 mkdir -p dist
-[ -f ffmpeg${EXT} ] && cp ffmpeg${EXT} "dist/vtx-ffmpeg-${VERSION}-${TARGET_OS}-${ARCH}-${PROFILE}${EXT}"
-[ -f ffprobe${EXT} ] && cp ffprobe${EXT} "dist/vtx-ffprobe-${VERSION}-${TARGET_OS}-${ARCH}-${PROFILE}${EXT}"
+OUT_FFMPEG="vtx-ffmpeg-${VERSION}-${TARGET_OS}-${ARCH}-${PROFILE}${EXT}"
+OUT_FFPROBE="vtx-ffprobe-${VERSION}-${TARGET_OS}-${ARCH}-${PROFILE}${EXT}"
+
+# 如果生成了 ffmpeg
+if [ -f ffmpeg${EXT} ]; then
+    cp ffmpeg${EXT} "dist/${OUT_FFMPEG}"
+    echo ">>> 生成: ${OUT_FFMPEG}"
+fi
+
+# 如果生成了 ffprobe
+if [ -f ffprobe${EXT} ]; then
+    cp ffprobe${EXT} "dist/${OUT_FFPROBE}"
+    echo ">>> 生成: ${OUT_FFPROBE}"
+fi
 
 echo ">>> ✅ 构建成功"
