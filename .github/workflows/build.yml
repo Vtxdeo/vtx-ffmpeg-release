@@ -16,63 +16,63 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # === Linux x86_64 (Musl Static) ===
+          # === Linux x86_64 (旗舰全覆盖) ===
           - os: linux
             arch: x86_64
             profile: nano
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: micro
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: mini
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: full
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: stream
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: indexer
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: audio
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: remux
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: transcode
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: animator
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: vod
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: archive
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: debug
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: x86_64
             profile: legacy
-            toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
+            use_toolchain: true
 
           # === Windows x86_64 ===
           - os: win
@@ -89,49 +89,49 @@ jobs:
           - os: linux
             arch: arm64
             profile: micro
-            toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: arm64
             profile: mini
-            toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: arm64
             profile: stream
-            toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: arm64
             profile: transcode
-            toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
+            use_toolchain: true
 
           # === ARMv7 ===
           - os: linux
             arch: armv7
             profile: nano
-            toolchain_url: "https://musl.cc/arm-linux-musleabi-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: armv7
             profile: legacy
-            toolchain_url: "https://musl.cc/arm-linux-musleabi-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: armv7
             profile: stream
-            toolchain_url: "https://musl.cc/arm-linux-musleabi-cross.tgz"
+            use_toolchain: true
 
           # === MIPS ===
           - os: linux
             arch: mipsel
             profile: nano
-            toolchain_url: "https://musl.cc/mipsel-linux-musl-cross.tgz"
+            use_toolchain: true
           - os: linux
             arch: mipsel
             profile: legacy
-            toolchain_url: "https://musl.cc/mipsel-linux-musl-cross.tgz"
+            use_toolchain: true
 
           # === RISC-V ===
           - os: linux
             arch: riscv64
             profile: micro
-            toolchain_url: "https://musl.cc/riscv64-linux-musl-cross.tgz"
+            use_toolchain: true
 
     steps:
       - name: Checkout FFmpeg Source
@@ -148,7 +148,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential yasm nasm pkg-config ccache mingw-w64 wget tar
+          sudo apt-get install -y build-essential yasm nasm pkg-config ccache mingw-w64 curl tar
 
       - name: Setup CCache
         uses: actions/cache@v3
@@ -160,26 +160,31 @@ jobs:
 
       - name: Cache Cross Toolchain
         id: cache-toolchain
-        if: matrix.toolchain_url != ''
+        if: matrix.use_toolchain == true
         uses: actions/cache@v3
         with:
           path: toolchain_dir
-          key: toolchain-${{ matrix.arch }}-${{ hashFiles('vtx-config/scripts/build.sh') }}
+          key: toolchain-v1-${{ matrix.arch }}-${{ hashFiles('vtx-config/scripts/build.sh') }}
 
-      - name: Setup Cross Toolchain
-        if: matrix.toolchain_url != '' && steps.cache-toolchain.outputs.cache-hit != 'true'
+      - name: Setup VTX Toolchain
+        if: matrix.use_toolchain == true && steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
-          echo "Downloading toolchain..."
+          ARCH_MAP="${{ matrix.arch }}"
+          [[ "$ARCH_MAP" == "arm64" ]] && ARCH_MAP="aarch64"
+          [[ "$ARCH_MAP" == "armv7" ]] && ARCH_MAP="arm-linux-musleabi"
+
+          REPO_URL="https://github.com/Vtxdeo/vtx-toolchains/releases/download/toolchain-latest/${ARCH_MAP}-linux-musl-cross.tgz"
+          
+          echo ">>> 正在从 VTX 镜像仓库下载工具链: $REPO_URL"
           mkdir -p toolchain_dir
-          # 优先使用预托管的 Release 地址（此处假设你已上传），若失败则回退 musl.cc
-          # 你可以将下方的 URL 替换为你托管工具链的具体 GitHub Release URL
-          wget --tries=5 --waitretry=10 --retry-connrefused -q -O toolchain.tgz ${{ matrix.toolchain_url }}
+
+          curl -L --retry 5 --retry-delay 10 -o toolchain.tgz "$REPO_URL"
           tar -xf toolchain.tgz -C toolchain_dir --strip-components=1
+          rm toolchain.tgz
 
       - name: Add Toolchain to Path
-        if: matrix.toolchain_url != ''
-        run: |
-          echo "$(pwd)/toolchain_dir/bin" >> $GITHUB_PATH
+        if: matrix.use_toolchain == true
+        run: echo "$(pwd)/toolchain_dir/bin" >> $GITHUB_PATH
 
       - name: Run Build Script
         run: |
