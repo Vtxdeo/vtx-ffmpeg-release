@@ -16,84 +16,65 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # === Linux x86_64 (Musl Static - 修复版) ===
-          # 基础类
+          # === Linux x86_64 (Musl Static) ===
           - os: linux
             arch: x86_64
             profile: nano
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: micro
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: mini
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: full
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
-
-          # 垂直场景类
           - os: linux
             arch: x86_64
             profile: stream
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: indexer
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: audio
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: remux
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: transcode
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: animator
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: vod
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: archive
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
-
-          # 特殊类
           - os: linux
             arch: x86_64
             profile: debug
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
           - os: linux
             arch: x86_64
             profile: legacy
             toolchain_url: "https://musl.cc/x86_64-linux-musl-cross.tgz"
-            toolchain_bin: "x86_64-linux-musl-cross/bin"
 
-          # === Windows x86_64 (MinGW) ===
+          # === Windows x86_64 ===
           - os: win
             arch: x86_64
             profile: micro
@@ -104,63 +85,53 @@ jobs:
             arch: x86_64
             profile: transcode
 
-          # === ARM64 (树莓派4/5, ARM服务器, 电视盒子) ===
+          # === ARM64 ===
           - os: linux
             arch: arm64
             profile: micro
             toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
-            toolchain_bin: "aarch64-linux-musl-cross/bin"
           - os: linux
             arch: arm64
             profile: mini
             toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
-            toolchain_bin: "aarch64-linux-musl-cross/bin"
           - os: linux
             arch: arm64
             profile: stream
             toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
-            toolchain_bin: "aarch64-linux-musl-cross/bin"
           - os: linux
             arch: arm64
             profile: transcode
             toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
-            toolchain_bin: "aarch64-linux-musl-cross/bin"
 
-          # === ARMv7 (树莓派3, 老机顶盒) ===
+          # === ARMv7 ===
           - os: linux
             arch: armv7
             profile: nano
             toolchain_url: "https://musl.cc/arm-linux-musleabi-cross.tgz"
-            toolchain_bin: "arm-linux-musleabi-cross/bin"
           - os: linux
             arch: armv7
             profile: legacy
             toolchain_url: "https://musl.cc/arm-linux-musleabi-cross.tgz"
-            toolchain_bin: "arm-linux-musleabi-cross/bin"
           - os: linux
             arch: armv7
             profile: stream
             toolchain_url: "https://musl.cc/arm-linux-musleabi-cross.tgz"
-            toolchain_bin: "arm-linux-musleabi-cross/bin"
 
-          # === MIPS (路由器: MT7620/7621, K2P) ===
+          # === MIPS ===
           - os: linux
             arch: mipsel
             profile: nano
             toolchain_url: "https://musl.cc/mipsel-linux-musl-cross.tgz"
-            toolchain_bin: "mipsel-linux-musl-cross/bin"
           - os: linux
             arch: mipsel
             profile: legacy
             toolchain_url: "https://musl.cc/mipsel-linux-musl-cross.tgz"
-            toolchain_bin: "mipsel-linux-musl-cross/bin"
 
-          # === RISC-V (开发板) ===
+          # === RISC-V ===
           - os: linux
             arch: riscv64
             profile: micro
             toolchain_url: "https://musl.cc/riscv64-linux-musl-cross.tgz"
-            toolchain_bin: "riscv64-linux-musl-cross/bin"
 
     steps:
       - name: Checkout FFmpeg Source
@@ -187,29 +158,39 @@ jobs:
           restore-keys: |
             ccache-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.profile }}-
 
+      - name: Cache Cross Toolchain
+        id: cache-toolchain
+        if: matrix.toolchain_url != ''
+        uses: actions/cache@v3
+        with:
+          path: toolchain_dir
+          key: toolchain-${{ matrix.arch }}-${{ hashFiles('vtx-config/scripts/build.sh') }}
+
       - name: Setup Cross Toolchain
+        if: matrix.toolchain_url != '' && steps.cache-toolchain.outputs.cache-hit != 'true'
+        run: |
+          echo "Downloading toolchain..."
+          mkdir -p toolchain_dir
+          # 优先使用预托管的 Release 地址（此处假设你已上传），若失败则回退 musl.cc
+          # 你可以将下方的 URL 替换为你托管工具链的具体 GitHub Release URL
+          wget --tries=5 --waitretry=10 --retry-connrefused -q -O toolchain.tgz ${{ matrix.toolchain_url }}
+          tar -xf toolchain.tgz -C toolchain_dir --strip-components=1
+
+      - name: Add Toolchain to Path
         if: matrix.toolchain_url != ''
         run: |
-          echo "Downloading toolchain from ${{ matrix.toolchain_url }}..."
-          wget --tries=5 --waitretry=5 --retry-connrefused -q -O toolchain.tgz ${{ matrix.toolchain_url }}
-          
-          tar -xf toolchain.tgz
-          DIR_NAME=$(tar -tf toolchain.tgz | head -1 | cut -f1 -d"/")
-          echo "$(pwd)/$DIR_NAME/bin" >> $GITHUB_PATH
+          echo "$(pwd)/toolchain_dir/bin" >> $GITHUB_PATH
 
       - name: Run Build Script
         run: |
           chmod +x vtx-config/scripts/build.sh
           export PATH="/usr/lib/ccache:$PATH"
-
           ./vtx-config/scripts/build.sh ${{ matrix.profile }} ${{ matrix.os }} ${{ matrix.arch }} ${{ github.ref_name }}
 
       - name: Generate Checksums
         run: |
           cd dist
           sha256sum * > checksums.txt
-          echo "Checksums generated:"
-          cat checksums.txt
 
       - name: Upload Artifacts
         uses: softprops/action-gh-release@v1
