@@ -16,7 +16,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # === Linux x86_64 (Native) ===
+          # === Linux x86_64 (Native - 旗舰全覆盖) ===
+          # 基础类
           - os: linux
             arch: x86_64
             profile: nano
@@ -29,6 +30,38 @@ jobs:
           - os: linux
             arch: x86_64
             profile: full
+          # 垂直场景类
+          - os: linux
+            arch: x86_64
+            profile: stream
+          - os: linux
+            arch: x86_64
+            profile: indexer
+          - os: linux
+            arch: x86_64
+            profile: audio
+          - os: linux
+            arch: x86_64
+            profile: remux
+          - os: linux
+            arch: x86_64
+            profile: transcode
+          - os: linux
+            arch: x86_64
+            profile: animator
+          - os: linux
+            arch: x86_64
+            profile: vod
+          - os: linux
+            arch: x86_64
+            profile: archive
+          # 特殊类
+          - os: linux
+            arch: x86_64
+            profile: debug
+          - os: linux
+            arch: x86_64
+            profile: legacy
 
           # === Windows x86_64 (MinGW) ===
           - os: win
@@ -37,8 +70,11 @@ jobs:
           - os: win
             arch: x86_64
             profile: full
+          - os: win
+            arch: x86_64
+            profile: transcode
 
-          # === ARM64 (树莓派4/5, 服务器) ===
+          # === ARM64 (树莓派4/5, ARM服务器, 电视盒子) ===
           - os: linux
             arch: arm64
             profile: micro
@@ -47,6 +83,16 @@ jobs:
           - os: linux
             arch: arm64
             profile: mini
+            toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
+            toolchain_bin: "aarch64-linux-musl-cross/bin"
+          - os: linux
+            arch: arm64
+            profile: stream   # 适用于 IoT 推流设备
+            toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
+            toolchain_bin: "aarch64-linux-musl-cross/bin"
+          - os: linux
+            arch: arm64
+            profile: transcode # 适用于高性能 ARM 服务器
             toolchain_url: "https://musl.cc/aarch64-linux-musl-cross.tgz"
             toolchain_bin: "aarch64-linux-musl-cross/bin"
 
@@ -56,11 +102,26 @@ jobs:
             profile: nano
             toolchain_url: "https://musl.cc/arm-linux-musleabi-cross.tgz"
             toolchain_bin: "arm-linux-musleabi-cross/bin"
+          - os: linux
+            arch: armv7
+            profile: legacy   # 兼容性优先
+            toolchain_url: "https://musl.cc/arm-linux-musleabi-cross.tgz"
+            toolchain_bin: "arm-linux-musleabi-cross/bin"
+          - os: linux
+            arch: armv7
+            profile: stream
+            toolchain_url: "https://musl.cc/arm-linux-musleabi-cross.tgz"
+            toolchain_bin: "arm-linux-musleabi-cross/bin"
 
           # === MIPS (路由器: MT7620/7621, K2P) ===
           - os: linux
             arch: mipsel
             profile: nano
+            toolchain_url: "https://musl.cc/mipsel-linux-musl-cross.tgz"
+            toolchain_bin: "mipsel-linux-musl-cross/bin"
+          - os: linux
+            arch: mipsel
+            profile: legacy
             toolchain_url: "https://musl.cc/mipsel-linux-musl-cross.tgz"
             toolchain_bin: "mipsel-linux-musl-cross/bin"
 
@@ -112,8 +173,17 @@ jobs:
 
           ./vtx-config/scripts/build.sh ${{ matrix.profile }} ${{ matrix.os }} ${{ matrix.arch }} ${{ github.ref_name }}
 
+      - name: Generate Checksums
+        run: |
+          cd dist
+          sha256sum * > checksums.txt
+          echo "Checksums generated:"
+          cat checksums.txt
+
       - name: Upload Artifacts
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: dist/*
+          files: |
+            dist/*
+            dist/checksums.txt

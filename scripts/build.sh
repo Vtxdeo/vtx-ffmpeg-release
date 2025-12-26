@@ -1,7 +1,13 @@
 #!/bin/bash
 set -e
 
-PROFILE=$1    # nano / micro / mini / full
+# Updated profile list:
+# nano / micro / mini / full
+# stream / indexer / audio
+# remux / transcode / animator
+# vod / archive
+# debug / legacy
+PROFILE=$1
 TARGET_OS=$2  # 目标操作系统: linux / win
 ARCH=$3       # x86_64 / arm64 / armv7 / mipsel / riscv64
 VERSION=$4    # 版本号
@@ -14,11 +20,19 @@ echo ">>> 配置文件: ${PROFILE}"
 echo ">>> 目标操作系统: ${TARGET_OS} / 架构: ${ARCH}"
 echo ">>> 版本号: ${VERSION}"
 
+# 获取当前 Git Commit SHA (用于注入构建元数据)
+if command -v git >/dev/null 2>&1; then
+    GIT_SHA=$(git rev-parse --short HEAD || echo "unknown")
+else
+    GIT_SHA="unknown"
+fi
+echo ">>> 构建 Commit SHA: ${GIT_SHA}"
+
+# 基础通用参数
 COMMON_FLAGS=(
     "--prefix=/dist"
     "--enable-static"
     "--disable-shared"
-    "--disable-debug"
     "--enable-small"
     "--disable-doc"
     "--disable-htmlpages"
@@ -27,12 +41,23 @@ COMMON_FLAGS=(
     "--disable-txtpages"
     "--pkg-config-flags=--static"
     "--extra-cflags=-Os"
-    "--extra-ldflags=-s"
+    # 将版本和 Commit SHA 注入到 CFLAGS，这样运行 ffmpeg 时会在 banner 中显示
+    "--extra-cflags=-DVTX_BUILD_SHA=\\\"${GIT_SHA}\\\""
+    "--extra-cflags=-DVTX_BUILD_VERSION=\\\"${VERSION}\\\""
 )
 
 if command -v ccache >/dev/null 2>&1; then
     echo ">>> 启用 CCache"
     COMMON_FLAGS+=("--cc=ccache gcc" "--cxx=ccache g++")
+fi
+
+# === 特殊预设处理 ===
+if [ "$PROFILE" == "debug" ]; then
+    echo ">>> ⚠️ DEBUG 模式: 禁用 Strip，保留调试符号"
+    COMMON_FLAGS+=("--enable-debug")
+else
+    COMMON_FLAGS+=("--disable-debug")
+    COMMON_FLAGS+=("--extra-ldflags=-s")
 fi
 
 # === 3. 交叉编译配置 ===
