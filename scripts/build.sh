@@ -71,10 +71,13 @@ case "${TARGET_OS}-${ARCH}" in
     linux-mipsel)
         COMMON_FLAGS+=("--arch=mipsel" "--target-os=linux" "--enable-cross-compile" "--cross-prefix=mipsel-linux-musl-")
         COMMON_FLAGS+=("--cpu=mips32r2" "--extra-cflags=-march=mips32r2")
-        COMMON_FLAGS+=("--disable-mipsdsp" "--disable-mipsdspr2")
+        # Disable DSP and MSA to ensure compatibility with legacy hardware and fix compilation errors on newer toolchains
+        COMMON_FLAGS+=("--disable-mipsdsp" "--disable-mipsdspr2" "--disable-msa")
         ;;
     linux-riscv64)
         COMMON_FLAGS+=("--arch=riscv64" "--target-os=linux" "--enable-cross-compile" "--cross-prefix=riscv64-linux-musl-")
+        # Disable assembly optimizations to resolve Zbb extension compatibility issues with current toolchain
+        COMMON_FLAGS+=("--disable-asm")
         ;;
     win-x86_64)
         COMMON_FLAGS+=("--arch=x86_64" "--target-os=mingw32" "--enable-cross-compile" "--cross-prefix=x86_64-w64-mingw32-")
